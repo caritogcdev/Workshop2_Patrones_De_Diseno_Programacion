@@ -67,7 +67,7 @@ public class XMLToJSON {
 
 - Implementar nuestra clase Adaptador
 
-El paso final seeia la creación de una clase que implementa la interfaz que hemos creado antes que se encargará de llamar invocar a la clase que contiene la lógica de conversión. Es decir, nuestra clase adapter hará una llamada a convertToJson().
+El paso final sería la creación de una clase que implementa la interfaz que hemos creado antes que se encargará de llamar (invocar) a la clase que contiene la lógica de conversión.
 
 ```
 public class XmlToJsonAdapter implements IDataAdapter {
@@ -124,4 +124,4 @@ public class Application {
 }
 ```
 
-Esta implementación nos va a permitir respetar principios como responsabilidad única y un código abierto y extensible, cpermitiendo que se puedan crear sin ningún problema más conversores.
+Esta implementación nos va a permitir respetar principios como responsabilidad única y un código abierto y extensible, permitiendo que se puedan crear sin ningún problema más conversores.
