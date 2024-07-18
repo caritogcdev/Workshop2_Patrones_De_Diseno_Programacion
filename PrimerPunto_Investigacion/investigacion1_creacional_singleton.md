@@ -35,8 +35,6 @@ public class Singleton{
         return instance;
     }
 }
-
 ```
 
 - Para saber: en Spring, los beans definidos con @Component, @Service, @Repository, o @Controller son singletons por defecto.
-

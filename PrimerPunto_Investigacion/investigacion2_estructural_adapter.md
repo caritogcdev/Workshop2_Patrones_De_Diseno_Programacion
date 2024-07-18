@@ -23,72 +23,105 @@ Una solución mucho más elegante sería colocar la funcionalidad que falta dent
 
 El patrón Adapter finge ser una pieza redonda con un radio igual a la mitad del diámetro del cuadrado (en otras palabras, el radio del círculo más pequeño en el que quepa la pieza cuadrada).
 
-```
-// Digamos que tienes dos clases con interfaces compatibles:
-// RoundHole (HoyoRedondo) y RoundPeg (PiezaRedonda).
-class RoundHole is
-    constructor RoundHole(radius) { ... }
+Enunciado del ejemplo: Tenemos un sistema legacy que todos los ficheros que exporta son en XML y tenemos una aplicación que procesa ficheros en JSON para realizar procesamiento de datos. Ninguna de las aplicaciones pueden ser cambiadas ya que son utilizadas por más aplicaciones por lo que debemos de añadir un adapter.
 
-    method getRadius() is
-        // Devuelve el radio del agujero.
+Vamos a describir los pasos a seguir para crear nuestro adapter:
 
-    method fits(peg: RoundPeg) is
-        return this.getRadius() >= peg.getRadius()
+- Crear Interfaz Adapter
 
-class RoundPeg is
-    constructor RoundPeg(radius) { ... }
-
-    method getRadius() is
-        // Devuelve el radio de la pieza.
+El primer paso para crear nuestro Adapter es crear una interfaz que sea el punto de entrada para transformar de un formato a otro.
 
 ```
+interface  IDataAdapter {
 
+  String convert(XMLToJSON xml) throws IOException;
 
-
+}
 ```
-// Pero hay una clase incompatible: SquarePeg (PiezaCuadrada).
-class SquarePeg is
-    constructor SquarePeg(width) { ... }
 
-    method getWidth() is
-        // Devuelve la anchura de la pieza cuadrada.
+- Definir la clase de lógica de nuestro Adaptador
 
-```
+En este punto vamos a añadir la lógica necesaria para convertir de XML a JSON. Vamos a definir una clase XML que se encargará de convertir XML a JSON.
 
 
 ```
-// Una clase adaptadora te permite encajar piezas cuadradas en
-// hoyos redondos. Extiende la clase RoundPeg para permitir a
-// los objetos adaptadores actuar como piezas redondas.
-class SquarePegAdapter extends RoundPeg is
-    // En realidad, el adaptador contiene una instancia de la
-    // clase SquarePeg.
-    private field peg: SquarePeg
+public class XMLToJSON {
 
-    constructor SquarePegAdapter(peg: SquarePeg) is
-        this.peg = peg
+  public XMLToJSON(String xml) {
+    this.xml = xml;
+  }
 
-    method getRadius() is
-        // El adaptador simula que es una pieza redonda con un
-        // radio que pueda albergar la pieza cuadrada que el
-        // adaptador envuelve.
-        return peg.getWidth() * Math.sqrt(2) / 2
+  private final String xml;
+  public String convertToJSONFromXML() throws IOException {
 
+    //lógica para convertir a JSON
+
+    XmlMapper xmlMapper = new XmlMapper();
+    JsonNode node = xmlMapper.readTree(xml.getBytes());
+    ObjectMapper jsonMapper = new ObjectMapper();
+    return jsonMapper.writeValueAsString(node);
+
+  }
+}
 ```
 
-```
-// En algún punto del código cliente.
-hole = new RoundHole(5)
-rpeg = new RoundPeg(5)
-hole.fits(rpeg) // verdadero
+- Implementar nuestra clase Adaptador
 
-small_sqpeg = new SquarePeg(5)
-large_sqpeg = new SquarePeg(10)
-hole.fits(small_sqpeg) // esto no compila (tipos incompatibles)
-
-small_sqpeg_adapter = new SquarePegAdapter(small_sqpeg)
-large_sqpeg_adapter = new SquarePegAdapter(large_sqpeg)
-hole.fits(small_sqpeg_adapter) // verdadero
-hole.fits(large_sqpeg_adapter) // falso
+El paso final seeia la creación de una clase que implementa la interfaz que hemos creado antes que se encargará de llamar invocar a la clase que contiene la lógica de conversión. Es decir, nuestra clase adapter hará una llamada a convertToJson().
 
 ```
+public class XmlToJsonAdapter implements IDataAdapter {
+
+  private final XMLToJSON xmlToJSON;
+
+  public XmlToJsonAdapter(XMLToJSON xml){
+    this.xmlToJSON = xml;
+  }
+
+  public String convert(XMLToJSON xml) throws IOException {
+    return this.xmlToJSON.convertToJSONFromXML();
+  }
+}
+```
+
+Una vez finalizada nuestra clase XmlToJsonAdapter, podríamos invocarlo desde nuestra clase principal de la siguiente manera:
+
+```
+public class Application {
+
+  public static String XML_STRING =
+      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
+          "<root>" +
+          "<firstName>John</firstName>" +
+          "<lastName>Snow</lastName>" +
+          "<age>25</age>" +
+          "<spouse/>" +
+          "<address>" +
+          "<street>237 Harrison Street</street>" +
+          "<city>Brooklyn, NY</city>" +
+          "<state>New York</state>" +
+          "<postalCode>11238</postalCode>" +
+          "</address>" +
+          "<phoneNumbers>" +
+          "<type>mobile</type>" +
+          "<number>212 555-3346</number>" +
+          "</phoneNumbers>" +
+          "<phoneNumbers>" +
+          "<type>fax</type>" +
+          "<number>646 555-4567</number>" +
+          "</phoneNumbers>" +
+          "</root>";
+
+  public static void main(String[] args) throws IOException {
+
+    XMLToJSON xmlToJSON = new XMLToJSON(XML_STRING);
+
+    IDataAdapter adapter = new XmlToJsonAdapter(xmlToJSON);
+    String json = adapter.convert(xmlToJSON);
+
+    System.out.println(json);
+  }
+}
+```
+
+Esta implementación nos va a permitir respetar principios como responsabilidad única y un código abierto y extensible, cpermitiendo que se puedan crear sin ningún problema más conversores.

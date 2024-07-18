@@ -44,7 +44,6 @@ public class Subject {
         }
     }
 }
-
 ```
 
 - Para saber: en Spring, se puede utilizar ApplicationEvent y ApplicationListener.
